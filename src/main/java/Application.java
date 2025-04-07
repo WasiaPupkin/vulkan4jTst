@@ -1,32 +1,184 @@
 import de.javagl.obj.ObjData;
 import de.javagl.obj.ObjReader;
 import de.javagl.obj.ObjUtils;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Matrix4f;
 import tech.icey.glfw.GLFW;
 import tech.icey.glfw.GLFWConstants;
 import tech.icey.glfw.GLFWLoader;
 import tech.icey.glfw.handle.GLFWwindow;
+import tech.icey.panama.Loader;
 import tech.icey.panama.NativeLayout;
 import tech.icey.panama.annotation.enumtype;
 import tech.icey.panama.annotation.pointer;
-import tech.icey.panama.buffer.*;
+import tech.icey.panama.buffer.ByteBuffer;
+import tech.icey.panama.buffer.FloatBuffer;
+import tech.icey.panama.buffer.IntBuffer;
+import tech.icey.panama.buffer.LongBuffer;
+import tech.icey.panama.buffer.PointerBuffer;
 import tech.icey.vk4j.Constants;
 import tech.icey.vk4j.Version;
 import tech.icey.vk4j.VulkanLoader;
-import tech.icey.vk4j.bitmask.*;
+import tech.icey.vk4j.bitmask.VkAccessFlags;
+import tech.icey.vk4j.bitmask.VkBufferUsageFlags;
+import tech.icey.vk4j.bitmask.VkColorComponentFlags;
+import tech.icey.vk4j.bitmask.VkCommandBufferUsageFlags;
+import tech.icey.vk4j.bitmask.VkCommandPoolCreateFlags;
+import tech.icey.vk4j.bitmask.VkCompositeAlphaFlagsKHR;
+import tech.icey.vk4j.bitmask.VkCullModeFlags;
+import tech.icey.vk4j.bitmask.VkDebugUtilsMessageSeverityFlagsEXT;
+import tech.icey.vk4j.bitmask.VkDebugUtilsMessageTypeFlagsEXT;
+import tech.icey.vk4j.bitmask.VkFenceCreateFlags;
+import tech.icey.vk4j.bitmask.VkFormatFeatureFlags;
+import tech.icey.vk4j.bitmask.VkImageAspectFlags;
+import tech.icey.vk4j.bitmask.VkImageUsageFlags;
+import tech.icey.vk4j.bitmask.VkMemoryPropertyFlags;
+import tech.icey.vk4j.bitmask.VkPipelineStageFlags;
+import tech.icey.vk4j.bitmask.VkQueueFlags;
+import tech.icey.vk4j.bitmask.VkSampleCountFlags;
+import tech.icey.vk4j.bitmask.VkShaderStageFlags;
 import tech.icey.vk4j.command.DeviceCommands;
 import tech.icey.vk4j.command.EntryCommands;
 import tech.icey.vk4j.command.InstanceCommands;
 import tech.icey.vk4j.command.StaticCommands;
-import tech.icey.vk4j.datatype.*;
-import tech.icey.vk4j.enumtype.*;
-import tech.icey.vk4j.handle.*;
+import tech.icey.vk4j.datatype.VkApplicationInfo;
+import tech.icey.vk4j.datatype.VkAttachmentDescription;
+import tech.icey.vk4j.datatype.VkAttachmentReference;
+import tech.icey.vk4j.datatype.VkBufferCopy;
+import tech.icey.vk4j.datatype.VkBufferCreateInfo;
+import tech.icey.vk4j.datatype.VkBufferImageCopy;
+import tech.icey.vk4j.datatype.VkClearValue;
+import tech.icey.vk4j.datatype.VkCommandBufferAllocateInfo;
+import tech.icey.vk4j.datatype.VkCommandBufferBeginInfo;
+import tech.icey.vk4j.datatype.VkCommandPoolCreateInfo;
+import tech.icey.vk4j.datatype.VkDebugUtilsMessengerCallbackDataEXT;
+import tech.icey.vk4j.datatype.VkDebugUtilsMessengerCreateInfoEXT;
+import tech.icey.vk4j.datatype.VkDescriptorBufferInfo;
+import tech.icey.vk4j.datatype.VkDescriptorImageInfo;
+import tech.icey.vk4j.datatype.VkDescriptorPoolCreateInfo;
+import tech.icey.vk4j.datatype.VkDescriptorPoolSize;
+import tech.icey.vk4j.datatype.VkDescriptorSetAllocateInfo;
+import tech.icey.vk4j.datatype.VkDescriptorSetLayoutBinding;
+import tech.icey.vk4j.datatype.VkDescriptorSetLayoutCreateInfo;
+import tech.icey.vk4j.datatype.VkDeviceCreateInfo;
+import tech.icey.vk4j.datatype.VkDeviceQueueCreateInfo;
+import tech.icey.vk4j.datatype.VkExtensionProperties;
+import tech.icey.vk4j.datatype.VkExtent2D;
+import tech.icey.vk4j.datatype.VkFenceCreateInfo;
+import tech.icey.vk4j.datatype.VkFormatProperties;
+import tech.icey.vk4j.datatype.VkFramebufferCreateInfo;
+import tech.icey.vk4j.datatype.VkGraphicsPipelineCreateInfo;
+import tech.icey.vk4j.datatype.VkImageBlit;
+import tech.icey.vk4j.datatype.VkImageCreateInfo;
+import tech.icey.vk4j.datatype.VkImageMemoryBarrier;
+import tech.icey.vk4j.datatype.VkImageViewCreateInfo;
+import tech.icey.vk4j.datatype.VkInstanceCreateInfo;
+import tech.icey.vk4j.datatype.VkLayerProperties;
+import tech.icey.vk4j.datatype.VkPhysicalDeviceFeatures;
+import tech.icey.vk4j.datatype.VkPhysicalDeviceMemoryProperties;
+import tech.icey.vk4j.datatype.VkPhysicalDeviceProperties;
+import tech.icey.vk4j.datatype.VkPipelineColorBlendAttachmentState;
+import tech.icey.vk4j.datatype.VkPipelineColorBlendStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineDepthStencilStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineDynamicStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineInputAssemblyStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineLayoutCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineMultisampleStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineRasterizationStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineShaderStageCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineVertexInputStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPipelineViewportStateCreateInfo;
+import tech.icey.vk4j.datatype.VkPresentInfoKHR;
+import tech.icey.vk4j.datatype.VkQueueFamilyProperties;
+import tech.icey.vk4j.datatype.VkRect2D;
+import tech.icey.vk4j.datatype.VkRenderPassBeginInfo;
+import tech.icey.vk4j.datatype.VkRenderPassCreateInfo;
+import tech.icey.vk4j.datatype.VkSamplerCreateInfo;
+import tech.icey.vk4j.datatype.VkSemaphoreCreateInfo;
+import tech.icey.vk4j.datatype.VkShaderModuleCreateInfo;
+import tech.icey.vk4j.datatype.VkSubmitInfo;
+import tech.icey.vk4j.datatype.VkSubpassDependency;
+import tech.icey.vk4j.datatype.VkSubpassDescription;
+import tech.icey.vk4j.datatype.VkSurfaceCapabilitiesKHR;
+import tech.icey.vk4j.datatype.VkSurfaceFormatKHR;
+import tech.icey.vk4j.datatype.VkSwapchainCreateInfoKHR;
+import tech.icey.vk4j.datatype.VkVertexInputAttributeDescription;
+import tech.icey.vk4j.datatype.VkVertexInputBindingDescription;
+import tech.icey.vk4j.datatype.VkViewport;
+import tech.icey.vk4j.datatype.VkWriteDescriptorSet;
+import tech.icey.vk4j.enumtype.VkAttachmentLoadOp;
+import tech.icey.vk4j.enumtype.VkAttachmentStoreOp;
+import tech.icey.vk4j.enumtype.VkBlendFactor;
+import tech.icey.vk4j.enumtype.VkBlendOp;
+import tech.icey.vk4j.enumtype.VkBorderColor;
+import tech.icey.vk4j.enumtype.VkColorSpaceKHR;
+import tech.icey.vk4j.enumtype.VkCommandBufferLevel;
+import tech.icey.vk4j.enumtype.VkCompareOp;
+import tech.icey.vk4j.enumtype.VkDescriptorType;
+import tech.icey.vk4j.enumtype.VkDynamicState;
+import tech.icey.vk4j.enumtype.VkFilter;
+import tech.icey.vk4j.enumtype.VkFormat;
+import tech.icey.vk4j.enumtype.VkFrontFace;
+import tech.icey.vk4j.enumtype.VkImageLayout;
+import tech.icey.vk4j.enumtype.VkImageTiling;
+import tech.icey.vk4j.enumtype.VkImageType;
+import tech.icey.vk4j.enumtype.VkImageViewType;
+import tech.icey.vk4j.enumtype.VkIndexType;
+import tech.icey.vk4j.enumtype.VkLogicOp;
+import tech.icey.vk4j.enumtype.VkPipelineBindPoint;
+import tech.icey.vk4j.enumtype.VkPolygonMode;
+import tech.icey.vk4j.enumtype.VkPresentModeKHR;
+import tech.icey.vk4j.enumtype.VkPrimitiveTopology;
+import tech.icey.vk4j.enumtype.VkResult;
+import tech.icey.vk4j.enumtype.VkSamplerAddressMode;
+import tech.icey.vk4j.enumtype.VkSamplerMipmapMode;
+import tech.icey.vk4j.enumtype.VkSharingMode;
+import tech.icey.vk4j.enumtype.VkSubpassContents;
+import tech.icey.vk4j.enumtype.VkVertexInputRate;
+import tech.icey.vk4j.handle.VkBuffer;
+import tech.icey.vk4j.handle.VkCommandBuffer;
+import tech.icey.vk4j.handle.VkCommandPool;
+import tech.icey.vk4j.handle.VkDebugUtilsMessengerEXT;
+import tech.icey.vk4j.handle.VkDescriptorPool;
+import tech.icey.vk4j.handle.VkDescriptorSet;
+import tech.icey.vk4j.handle.VkDescriptorSetLayout;
+import tech.icey.vk4j.handle.VkDevice;
+import tech.icey.vk4j.handle.VkFence;
+import tech.icey.vk4j.handle.VkFramebuffer;
+import tech.icey.vk4j.handle.VkImage;
+import tech.icey.vk4j.handle.VkImageView;
+import tech.icey.vk4j.handle.VkInstance;
+import tech.icey.vk4j.handle.VkPhysicalDevice;
+import tech.icey.vk4j.handle.VkPipeline;
+import tech.icey.vk4j.handle.VkPipelineLayout;
+import tech.icey.vk4j.handle.VkQueue;
+import tech.icey.vk4j.handle.VkRenderPass;
+import tech.icey.vk4j.handle.VkSampler;
+import tech.icey.vk4j.handle.VkSemaphore;
+import tech.icey.vk4j.handle.VkShaderModule;
+import tech.icey.vk4j.handle.VkSurfaceKHR;
+import tech.icey.vk4j.handle.VkSwapchainKHR;
+import tech.icey.vma.VMA;
+import tech.icey.vma.VMAJavaTraceUtil;
+import tech.icey.vma.VMAUtil;
+import tech.icey.vma.bitmask.VmaAllocationCreateFlags;
+import tech.icey.vma.datatype.VmaAllocationCreateInfo;
+import tech.icey.vma.datatype.VmaAllocationInfo;
+import tech.icey.vma.datatype.VmaAllocatorCreateInfo;
+import tech.icey.vma.datatype.VmaVulkanFunctions;
+import tech.icey.vma.enumtype.VmaMemoryUsage;
+import tech.icey.vma.handle.VmaAllocation;
+import tech.icey.vma.handle.VmaAllocator;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.lang.foreign.*;
+import java.lang.foreign.Arena;
+import java.lang.foreign.FunctionDescriptor;
+import java.lang.foreign.Linker;
+import java.lang.foreign.MemorySegment;
+import java.lang.foreign.ValueLayout;
 import java.lang.invoke.MethodHandle;
 import java.lang.invoke.MethodHandles;
 import java.nio.ByteOrder;
@@ -100,6 +252,8 @@ public class Application {
     private DeviceCommands deviceCommands;
     private VkQueue graphicsQueue;
     private VkQueue presentQueue;
+    private VMA vma;
+    private VmaAllocator vmaAllocator;
     private VkSwapchainKHR swapChain;
     private VkImage[] swapChainImages;
     private @enumtype(VkFormat.class) int swapChainImageFormat;
@@ -112,24 +266,24 @@ public class Application {
     private VkFramebuffer[] swapChainFramebuffers;
     private VkCommandPool commandPool;
     private VkImage colorImage;
-    private VkDeviceMemory colorImageMemory;
+    private VmaAllocation colorImageAllocation;
     private VkImageView colorImageView;
     private VkImage depthImage;
-    private VkDeviceMemory depthImageMemory;
+    private VmaAllocation depthImageAllocation;
     private VkImageView depthImageView;
     private int textureMipLevels;
     private VkImage textureImage;
-    private VkDeviceMemory textureImageMemory;
+    private VmaAllocation textureImageAllocation;
     private float[] vertices;
     private int[] indices;
     private VkBuffer vertexBuffer;
     private VkImageView textureImageView;
     private VkSampler textureSampler;
-    private VkDeviceMemory vertexBufferMemory;
+    private VmaAllocation vertexBufferAllocation;
     private VkBuffer indexBuffer;
-    private VkDeviceMemory indexBufferMemory;
+    private VmaAllocation indexBufferAllocation;
     private VkBuffer[] uniformBuffers;
-    private VkDeviceMemory[] uniformBuffersMemory;
+    private VmaAllocation[] uniformBuffersAllocation;
     private FloatBuffer[] uniformBuffersMapped;
     private VkDescriptorPool descriptorPool;
     private VkDescriptorSet[] descriptorSets;
@@ -190,6 +344,7 @@ public class Application {
         createSurface();
         pickPhysicalDevice();
         createLogicalDevice();
+        createVMA();
         createSwapchain();
         createImageViews();
         createRenderPass();
@@ -230,21 +385,18 @@ public class Application {
         cleanupSwapChain();
         deviceCommands.vkDestroySampler(device, textureSampler, null);
         deviceCommands.vkDestroyImageView(device, textureImageView, null);
-        deviceCommands.vkDestroyImage(device, textureImage, null);
-        deviceCommands.vkFreeMemory(device, textureImageMemory, null);
-        deviceCommands.vkDestroyBuffer(device, vertexBuffer, null);
-        deviceCommands.vkFreeMemory(device, vertexBufferMemory, null);
-        deviceCommands.vkDestroyBuffer(device, indexBuffer, null);
-        deviceCommands.vkFreeMemory(device, indexBufferMemory, null);
+        vma.vmaDestroyImage(vmaAllocator, textureImage, textureImageAllocation);
+        vma.vmaDestroyBuffer(vmaAllocator, vertexBuffer, vertexBufferAllocation);
+        vma.vmaDestroyBuffer(vmaAllocator, indexBuffer, indexBufferAllocation);
         deviceCommands.vkDestroyPipeline(device, graphicsPipeline, null);
         deviceCommands.vkDestroyPipelineLayout(device, pipelineLayout, null);
         for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            deviceCommands.vkDestroyBuffer(device, uniformBuffers[i], null);
-            deviceCommands.vkFreeMemory(device, uniformBuffersMemory[i], null);
+            vma.vmaDestroyBuffer(vmaAllocator, uniformBuffers[i], uniformBuffersAllocation[i]);
         }
         deviceCommands.vkDestroyDescriptorPool(device, descriptorPool, null);
         deviceCommands.vkDestroyDescriptorSetLayout(device, descriptorSetLayout, null);
         deviceCommands.vkDestroyRenderPass(device, renderPass, null);
+        vma.vmaDestroyAllocator(vmaAllocator);
         deviceCommands.vkDestroyDevice(device, null);
         if (ENABLE_VALIDATION_LAYERS) {
             instanceCommands.vkDestroyDebugUtilsMessengerEXT(instance, debugMessenger, null);
@@ -1349,11 +1501,9 @@ public class Application {
 
     private void cleanupSwapChain() {
         deviceCommands.vkDestroyImageView(device, colorImageView, null);
-        deviceCommands.vkDestroyImage(device, colorImage, null);
-        deviceCommands.vkFreeMemory(device, colorImageMemory, null);
+        vma.vmaDestroyImage(vmaAllocator, colorImage, colorImageAllocation);
         deviceCommands.vkDestroyImageView(device, depthImageView, null);
-        deviceCommands.vkDestroyImage(device, depthImage, null);
-        deviceCommands.vkFreeMemory(device, depthImageMemory, null);
+        vma.vmaDestroyImage(vmaAllocator, depthImage, depthImageAllocation);
 
         for (var framebuffer : swapChainFramebuffers) {
             deviceCommands.vkDestroyFramebuffer(device, framebuffer, null);
@@ -1421,32 +1571,32 @@ public class Application {
             var pair = createBuffer(
                     bufferSize,
                     VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                            | VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+                    VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                    null
             );
             var stagingBuffer = pair.first;
-            var stagingBufferMemory = pair.second;
+            var stagingBufferAllocation = pair.second;
 
             var ppData = PointerBuffer.allocate(arena);
-            var result = deviceCommands.vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, ppData.segment());
+            var result = vma.vmaMapMemory(vmaAllocator, stagingBufferAllocation, ppData);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RuntimeException("Failed to map vertex buffer memory, vulkan error code: " + VkResult.explain(result));
             }
             var pData = ppData.read().reinterpret(bufferSize);
             pData.copyFrom(MemorySegment.ofArray(vertices));
-            deviceCommands.vkUnmapMemory(device, stagingBufferMemory);
+            vma.vmaUnmapMemory(vmaAllocator, stagingBufferAllocation);
 
             pair = createBuffer(
                     bufferSize,
                     VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VkBufferUsageFlags.VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-                    VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                    0,
+                    null
             );
             vertexBuffer = pair.first;
-            vertexBufferMemory = pair.second;
+            vertexBufferAllocation = pair.second;
 
             copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
-            deviceCommands.vkDestroyBuffer(device, stagingBuffer, null);
-            deviceCommands.vkFreeMemory(device, stagingBufferMemory, null);
+            vma.vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingBufferAllocation);
         }
     }
 
@@ -1458,44 +1608,43 @@ public class Application {
             var pair = createBuffer(
                     bufferSize,
                     VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                            | VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+                    VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                    null
             );
             var stagingBuffer = pair.first;
-            var stagingBufferMemory = pair.second;
+            var stagingBufferAllocation = pair.second;
 
             var ppData = PointerBuffer.allocate(arena);
-            var result = deviceCommands.vkMapMemory(device, stagingBufferMemory, 0, bufferSize, 0, ppData.segment());
+            var result = vma.vmaMapMemory(vmaAllocator, stagingBufferAllocation, ppData);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RuntimeException("Failed to map index buffer memory, vulkan error code: " + VkResult.explain(result));
             }
             var pData = ppData.read().reinterpret(bufferSize);
 
             pData.copyFrom(MemorySegment.ofArray(indices));
-
-            deviceCommands.vkUnmapMemory(device, stagingBufferMemory);
+            vma.vmaUnmapMemory(vmaAllocator, stagingBufferAllocation);
 
             pair = createBuffer(
                     bufferSize,
                     VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_DST_BIT | VkBufferUsageFlags.VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-                    VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                    0,
+                    null
             );
             indexBuffer = pair.first;
-            indexBufferMemory = pair.second;
+            indexBufferAllocation = pair.second;
 
             copyBuffer(stagingBuffer, indexBuffer, bufferSize);
-
-            deviceCommands.vkDestroyBuffer(device, stagingBuffer, null);
-            deviceCommands.vkFreeMemory(device, stagingBufferMemory, null);
+            vma.vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingBufferAllocation);
         }
     }
 
     private record Pair<T1, T2>(T1 first, T2 second) {}
 
-    private Pair<VkBuffer, VkDeviceMemory> createBuffer(
+    private Pair<VkBuffer, VmaAllocation> createBuffer(
             int size,
             @enumtype(VkBufferUsageFlags.class) int usage,
-            @enumtype(VkMemoryPropertyFlags.class) int properties
+            @enumtype(VmaAllocationCreateFlags.class) int vmaAllocationCreationFlags,
+            @Nullable VmaAllocationInfo allocationInfo
     ) {
         try (var arena = Arena.ofConfined()) {
             var bufferInfo = VkBufferCreateInfo.allocate(arena);
@@ -1503,28 +1652,21 @@ public class Application {
             bufferInfo.usage(usage);
             bufferInfo.sharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
 
+            var allocationCreateInfo = VmaAllocationCreateInfo.allocate(arena);
+            allocationCreateInfo.usage(VmaMemoryUsage.VMA_MEMORY_USAGE_AUTO);
+            allocationCreateInfo.flags(vmaAllocationCreationFlags);
+
             var pBuffer = VkBuffer.Buffer.allocate(arena);
-            var result = deviceCommands.vkCreateBuffer(device, bufferInfo, null, pBuffer);
+            var pAllocation = VmaAllocation.Buffer.allocate(arena);
+            var result = vma.vmaCreateBuffer(vmaAllocator, bufferInfo, allocationCreateInfo, pBuffer, pAllocation, allocationInfo);
             if (result != VkResult.VK_SUCCESS) {
-                throw new RuntimeException("Failed to create vertex buffer, vulkan error code: " + VkResult.explain(result));
+                throw new RuntimeException("Failed to create buffer, vulkan error code: " + VkResult.explain(result));
             }
+
             var buffer = pBuffer.read();
+            var allocation = pAllocation.read();
 
-            var memRequirements = VkMemoryRequirements.allocate(arena);
-            deviceCommands.vkGetBufferMemoryRequirements(device, buffer, memRequirements);
-
-            var allocInfo = VkMemoryAllocateInfo.allocate(arena);
-            allocInfo.allocationSize(memRequirements.size());
-            allocInfo.memoryTypeIndex(findMemoryType(memRequirements.memoryTypeBits(), properties));
-            var pMemory = VkDeviceMemory.Buffer.allocate(arena);
-            result = deviceCommands.vkAllocateMemory(device, allocInfo, null, pMemory);
-            if (result != VkResult.VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate vertex buffer memory, vulkan error code: " + VkResult.explain(result));
-            }
-            var memory = pMemory.read();
-
-            deviceCommands.vkBindBufferMemory(device, buffer, memory, 0);
-            return new Pair<>(buffer, memory);
+            return new Pair<>(buffer, allocation);
         }
     }
 
@@ -1571,35 +1713,23 @@ public class Application {
     private void createUniformBuffers() {
         var bufferSize = UniformBufferObject.bufferSize();
         uniformBuffers = new VkBuffer[MAX_FRAMES_IN_FLIGHT];
-        uniformBuffersMemory = new VkDeviceMemory[MAX_FRAMES_IN_FLIGHT];
+        uniformBuffersAllocation = new VmaAllocation[MAX_FRAMES_IN_FLIGHT];
         uniformBuffersMapped = new FloatBuffer[MAX_FRAMES_IN_FLIGHT];
 
         try (var arena = Arena.ofConfined()) {
-            var pMappedMemory = PointerBuffer.allocate(arena);
-
+            var allocationInfo = VmaAllocationInfo.allocate(arena);
             for (int i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
                 var pair = createBuffer(
                         bufferSize * Float.BYTES,
                         VkBufferUsageFlags.VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                        VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                                | VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+                        VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_MAPPED_BIT
+                                | VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                        allocationInfo
                 );
                 uniformBuffers[i] = pair.first;
-                uniformBuffersMemory[i] = pair.second;
+                uniformBuffersAllocation[i] = pair.second;
 
-                var result = deviceCommands.vkMapMemory(
-                        device,
-                        uniformBuffersMemory[i],
-                        0,
-                        (long) bufferSize * Float.BYTES,
-                        0,
-                        pMappedMemory.segment()
-                );
-                if (result != VkResult.VK_SUCCESS) {
-                    throw new RuntimeException("Failed to map uniform buffer memory, vulkan error code: " + VkResult.explain(result));
-                }
-
-                uniformBuffersMapped[i] = new FloatBuffer(pMappedMemory.read()).reinterpret(bufferSize);
+                uniformBuffersMapped[i] = new FloatBuffer(allocationInfo.pMappedData()).reinterpret(bufferSize);
             }
         }
     }
@@ -1864,14 +1994,14 @@ public class Application {
             var pair = createBuffer(
                     imageSizeBytes,
                     VkBufferUsageFlags.VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-                    VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-                            | VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+                    VmaAllocationCreateFlags.VMA_ALLOCATION_CREATE_HOST_ACCESS_RANDOM_BIT,
+                    null
             );
             var stagingBuffer = pair.first;
-            var stagingBufferMemory = pair.second;
+            var stagingBufferAllocation = pair.second;
 
             var ppData = PointerBuffer.allocate(arena);
-            var result = deviceCommands.vkMapMemory(device, stagingBufferMemory, 0, imageSizeBytes, 0, ppData.segment());
+            var result = vma.vmaMapMemory(vmaAllocator, stagingBufferAllocation, ppData);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RuntimeException("Failed to map texture image memory, vulkan error code: " + VkResult.explain(result));
             }
@@ -1887,7 +2017,7 @@ public class Application {
                     buffer.write(linearIndex * 4L + 3, (byte) color.getAlpha());
                 }
             }
-            deviceCommands.vkUnmapMemory(device, stagingBufferMemory);
+            vma.vmaUnmapMemory(vmaAllocator, stagingBufferAllocation);
 
             var pair2 = createImage(
                     width,
@@ -1898,11 +2028,10 @@ public class Application {
                     VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
                     VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_DST_BIT
                             | VkImageUsageFlags.VK_IMAGE_USAGE_SAMPLED_BIT
-                            | VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-                    VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                            | VkImageUsageFlags.VK_IMAGE_USAGE_TRANSFER_SRC_BIT
             );
             textureImage = pair2.first;
-            textureImageMemory = pair2.second;
+            textureImageAllocation = pair2.second;
 
             transitionImageLayout(
                     textureImage,
@@ -1914,20 +2043,18 @@ public class Application {
             copyBufferToImage(stagingBuffer, textureImage, width, height);
             generateMipmaps(textureImage, VkFormat.VK_FORMAT_R8G8B8A8_SRGB, width, height, textureMipLevels);
 
-            deviceCommands.vkDestroyBuffer(device, stagingBuffer, null);
-            deviceCommands.vkFreeMemory(device, stagingBufferMemory, null);
+            vma.vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingBufferAllocation);
         }
     }
 
-    private Pair<VkImage, VkDeviceMemory> createImage(
+    private Pair<VkImage, VmaAllocation> createImage(
             int width,
             int height,
             int mipLevels,
             @enumtype(VkSampleCountFlags.class) int numSamples,
             @enumtype(VkFormat.class) int format,
             @enumtype(VkImageTiling.class) int tiling,
-            @enumtype(VkImageUsageFlags.class) int usage,
-            @enumtype(VkMemoryPropertyFlags.class) int properties
+            @enumtype(VkImageUsageFlags.class) int usage
     ) {
         try (var arena = Arena.ofConfined()) {
             var imageInfo = VkImageCreateInfo.allocate(arena);
@@ -1944,29 +2071,18 @@ public class Application {
             imageInfo.samples(numSamples);
             imageInfo.sharingMode(VkSharingMode.VK_SHARING_MODE_EXCLUSIVE);
 
+            var allocationCreateInfo = VmaAllocationCreateInfo.allocate(arena);
+            allocationCreateInfo.usage(VmaMemoryUsage.VMA_MEMORY_USAGE_GPU_ONLY);
+
             var pImage = VkImage.Buffer.allocate(arena);
-            var result = deviceCommands.vkCreateImage(device, imageInfo, null, pImage);
+            var pAllocation = VmaAllocation.Buffer.allocate(arena);
+            var result = vma.vmaCreateImage(vmaAllocator, imageInfo, allocationCreateInfo, pImage, pAllocation, null);
             if (result != VkResult.VK_SUCCESS) {
                 throw new RuntimeException("Failed to create image, vulkan error code: " + VkResult.explain(result));
             }
             var image = pImage.read();
-
-            var memRequirements = VkMemoryRequirements.allocate(arena);
-            deviceCommands.vkGetImageMemoryRequirements(device, image, memRequirements);
-
-            var allocInfo = VkMemoryAllocateInfo.allocate(arena);
-            allocInfo.allocationSize(memRequirements.size());
-            allocInfo.memoryTypeIndex(findMemoryType(memRequirements.memoryTypeBits(), properties));
-
-            var pMemory = VkDeviceMemory.Buffer.allocate(arena);
-            result = deviceCommands.vkAllocateMemory(device, allocInfo, null, pMemory);
-            if (result != VkResult.VK_SUCCESS) {
-                throw new RuntimeException("Failed to allocate image memory, vulkan error code: " + VkResult.explain(result));
-            }
-            var memory = pMemory.read();
-
-            deviceCommands.vkBindImageMemory(device, image, memory, 0);
-            return new Pair<>(image, memory);
+            var allocation = pAllocation.read();
+            return new Pair<>(image, allocation);
         }
     }
 
@@ -2129,11 +2245,10 @@ public class Application {
                 msaaSamples,
                 depthFormat,
                 VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
-                VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                VkImageUsageFlags.VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT
         );
         depthImage = pair.first;
-        depthImageMemory = pair.second;
+        depthImageAllocation = pair.second;
         depthImageView = createImageView(depthImage, depthFormat, VkImageAspectFlags.VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
         transitionImageLayout(
@@ -2343,11 +2458,42 @@ public class Application {
                 colorFormat,
                 VkImageTiling.VK_IMAGE_TILING_OPTIMAL,
                 VkImageUsageFlags.VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT
-                        | VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-                VkMemoryPropertyFlags.VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT
+                        | VkImageUsageFlags.VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT
         );
         colorImage = pair.first;
-        colorImageMemory = pair.second;
+        colorImageAllocation = pair.second;
         colorImageView = createImageView(colorImage, colorFormat, VkImageAspectFlags.VK_IMAGE_ASPECT_COLOR_BIT, 1);
+    }
+
+    private void createVMA() {
+        System.loadLibrary("vma");
+        vma = new VMA(Loader::loadFunction);
+        VMAJavaTraceUtil.enableJavaTraceForVMA();
+
+        try (var arena = Arena.ofConfined()) {
+            var vmaVulkanFunctions = VmaVulkanFunctions.allocate(arena);
+            VMAUtil.fillVulkanFunctions(
+                    vmaVulkanFunctions,
+                    staticCommands,
+                    entryCommands,
+                    instanceCommands,
+                    deviceCommands
+            );
+
+            var vmaCreateInfo = VmaAllocatorCreateInfo.allocate(arena);
+            vmaCreateInfo.instance(instance);
+            vmaCreateInfo.physicalDevice(physicalDevice);
+            vmaCreateInfo.device(device);
+            vmaCreateInfo.pVulkanFunctions(vmaVulkanFunctions);
+            vmaCreateInfo.vulkanApiVersion(Version.VK_API_VERSION_1_1);
+
+            var pVmaAllocator = VmaAllocator.Buffer.allocate(arena);
+            var result = vma.vmaCreateAllocator(vmaCreateInfo, pVmaAllocator);
+            if (result != VkResult.VK_SUCCESS) {
+                throw new RuntimeException("Failed to create VMA allocator, vulkan error code: " + VkResult.explain(result));
+            }
+
+            vmaAllocator = pVmaAllocator.read();
+        }
     }
 }
